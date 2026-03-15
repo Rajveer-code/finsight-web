@@ -1,0 +1,127 @@
+'use client'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { motion } from 'framer-motion'
+import {
+  TrendingUp, BarChart2, Zap, Activity,
+  Globe2, Search, BookOpen, ExternalLink, Github, X
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+const nav = [
+  { href: '/',          label: 'Overview',          icon: TrendingUp  },
+  { href: '/models',    label: 'Model Performance',  icon: BarChart2   },
+  { href: '/features',  label: 'Feature Importance', icon: Zap         },
+  { href: '/backtest',  label: 'Backtest',           icon: Activity    },
+  { href: '/sectors',   label: 'Sector Analysis',    icon: Globe2      },
+  { href: '/explorer',  label: 'Explorer',           icon: Search      },
+]
+
+type SidebarProps = {
+  isOpen?: boolean
+  onClose?: () => void
+}
+
+export function Sidebar({ onClose }: SidebarProps = {}) {
+  const path = usePathname()
+  return (
+    <aside className="w-56 shrink-0 border-r border-zinc-800/60 bg-[#08090d] flex flex-col h-full">
+      {/* Logo */}
+      <div className="px-5 py-5 border-b border-zinc-800/60 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/40">
+            <TrendingUp className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <div className="font-bold text-white leading-none">FinSight</div>
+            <div className="text-[10px] text-zinc-500 mt-0.5">Earnings Intelligence</div>
+          </div>
+        </div>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="md:hidden inline-flex items-center justify-center rounded-md p-1.5 text-zinc-500 hover:text-zinc-100 hover:bg-zinc-800/70 focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+            aria-label="Close navigation"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        {nav.map(({ href, label, icon: Icon }) => {
+          const active = path === href
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                'group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 border-l-2 border-transparent overflow-hidden',
+                active
+                  ? 'text-white font-semibold border-l-2 border-blue-500'
+                  : 'text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/70'
+              )}
+            >
+              {active && (
+                <motion.div
+                  layoutId="sidebar-active"
+                  className="absolute inset-0 rounded-lg bg-blue-500/10"
+                  transition={{ type: 'spring', stiffness: 500, damping: 40, mass: 0.8 }}
+                />
+              )}
+              <Icon className={cn(
+                'w-4 h-4 shrink-0 transition-colors relative z-10',
+                active ? 'text-blue-400' : 'text-zinc-600 group-hover:text-zinc-300'
+              )} />
+              <span className="relative z-10">{label}</span>
+              {active && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="ml-auto h-4 w-0.5 rounded-full bg-blue-500 relative z-10"
+                  transition={{ type: 'spring', stiffness: 500, damping: 40, mass: 0.8 }}
+                />
+              )}
+            </Link>
+          )
+        })}
+      </nav>
+
+      {/* Divider */}
+      <div className="mx-4 border-t border-zinc-800/60" />
+
+      {/* Footer links */}
+      <div className="px-4 py-4 space-y-2">
+        <a
+          href="https://huggingface.co/spaces/Rajveer234/finsight"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
+        >
+          <ExternalLink className="w-3 h-3" />
+          Streamlit Demo
+        </a>
+        <a
+          href="https://github.com/Rajveer-code/Finsight"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
+        >
+          <Github className="w-3 h-3" />
+          Source Code
+        </a>
+        <div className="pt-1">
+          <div className="text-[10px] text-zinc-700">Rajveer Singh Pall</div>
+          <div className="text-[10px] text-zinc-800">March 2026</div>
+        </div>
+        <div className="flex justify-end pt-2">
+          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-700 text-[10px] text-zinc-500">
+            <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-200 font-mono text-[10px]">?</span>
+            <span>Shortcuts</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  )
+}
