@@ -10,7 +10,9 @@ import { fetchData } from '@/lib/types'
 import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
 import { InsightCard } from '@/components/ui/insight-card'
+
 import { HeroMetrics } from '@/components/ui/hero-metrics'
+
 
 function featColor(name: string) {
   if (name.startsWith('rag_'))  return '#3b82f6'
@@ -113,14 +115,24 @@ export default function FeaturesPage() {
         description="SHapley Additive exPlanations on LightGBM trained across the full dataset. Shows which features actually drive predictions vs which are noise."
       />
 
-      <HeroMetrics
-        metrics={[
-          { label: 'Top Driver', value: top20[0]?.shap ?? 0, decimals: 4, hint: top20[0]?.shortLabel ?? '—', tone: 'positive' },
-          { label: 'Top-20 Power', value: ((top20.reduce((a, b) => a + b.shap, 0) / (shap.reduce((a, b) => a + b.shap, 0) || 1)) * 100), suffix: '%', decimals: 0, hint: 'Concentration of signal', tone: 'neutral' },
-          { label: 'Feature Families', value: pieData.length, hint: 'RAG + FinBERT groups', tone: 'neutral' },
-          { label: 'Lens', value: filteredTop20.length, hint: `${groupFilter} features shown`, tone: 'warning' },
-        ]}
-      />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <ChartCard title="Top driver" subtitle="Highest mean |SHAP|">
+          <div className="text-xl font-black text-zinc-100">{top20[0]?.shortLabel ?? '—'}</div>
+          <p className="text-xs text-zinc-400 mt-1">{top20[0] ? `${top20[0].shap.toFixed(4)} impact score` : 'No data loaded'}</p>
+        </ChartCard>
+        <ChartCard title="Dominant family" subtitle="Largest total contribution">
+          <div className="text-xl font-black text-blue-300">{pieData.sort((a, b) => b.value - a.value)[0]?.name ?? '—'}</div>
+          <p className="text-xs text-zinc-400 mt-1">Most of the model signal comes from this feature class.</p>
+        </ChartCard>
+        <ChartCard title="Top-20 concentration" subtitle="Decision simplicity">
+          <div className="text-xl font-black text-zinc-100">{((top20.reduce((a, b) => a + b.shap, 0) / (shap.reduce((a, b) => a + b.shap, 0) || 1)) * 100).toFixed(0)}%</div>
+          <p className="text-xs text-zinc-400 mt-1">Share of explanatory power captured by top 20 features.</p>
+        </ChartCard>
+        <ChartCard title="Filter focus" subtitle="Current analysis lens">
+          <div className="text-xl font-black text-zinc-100">{groupFilter}</div>
+          <p className="text-xs text-zinc-400 mt-1">Use filter below to inspect what truly drives forecasts.</p>
+        </ChartCard>
+      </div>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">

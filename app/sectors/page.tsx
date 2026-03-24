@@ -11,7 +11,6 @@ import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
 import { PerformanceBadge } from '@/components/ui/performance-badge'
 import { InsightCard } from '@/components/ui/insight-card'
-import { HeroMetrics } from '@/components/ui/hero-metrics'
 
 const SECTOR_INSIGHTS: Record<string, string> = {
   Energy: 'Concrete numerical guidance (barrels/day, margins) makes earnings highly predictable. High information asymmetry with commodity price exposure.',
@@ -67,6 +66,43 @@ export default function SectorsPage() {
           { label: 'Sectors Covered', value: sectors.length, hint: 'Cross-sector scope', tone: 'neutral' },
         ]}
       />
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm uppercase tracking-widest text-zinc-400 font-semibold">Key insights</h2>
+          <select
+            value={sectorFilter}
+            onChange={(e) => setSectorFilter(e.target.value)}
+            className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-zinc-300"
+            title="Filter to isolate one sector and understand sector-specific deployability."
+          >
+            <option value="All">All sectors</option>
+            {sectors.map((s) => <option key={s.sector} value={s.sector}>{s.sector}</option>)}
+          </select>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <InsightCard
+            title="Deploy selectively by sector"
+            insight={`Top signal is ${topSector?.sector ?? '—'} while weakest is ${bottomSector?.sector ?? '—'}.`}
+            implication="Build sector-aware position sizing rather than a uniform cross-sector model."
+            whyItMatters="Sector heterogeneity can dominate model quality; one-size-fits-all allocation burns edge."
+            tone="positive"
+          />
+          <InsightCard
+            title="Technology signal is near efficient-market floor"
+            insight="Narrative-heavy guidance in large-cap tech is rapidly priced by the market."
+            implication="Lower expected alpha; keep tech weight capped unless supported by non-NLP factors."
+            whyItMatters="Prevents over-allocating to highly competitive information environments."
+            tone="warning"
+          />
+          <InsightCard
+            title="Energy and Industrials behave as information-asymmetric sectors"
+            insight="Operational disclosures remain concrete and slower to be fully priced."
+            implication="Prioritize NLP feature depth and earnings-event workflows in those sectors."
+            whyItMatters="This is where marginal modeling effort should generate the most ROI."
+          />
+        </div>
+      </section>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">

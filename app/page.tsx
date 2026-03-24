@@ -12,7 +12,78 @@ import { fetchData } from '@/lib/types'
 import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
 import { InsightCard } from '@/components/ui/insight-card'
-import { HeroMetrics } from '@/components/ui/hero-metrics'
+
+// ── Animated counter ───────────────────────────────────────────────────────────
+function useCountUp(target: number, duration = 1800, decimals = 0, ready = false) {
+  const [value, setValue] = useState(0)
+  const ref = useRef(false)
+  const lastTarget = useRef<number | null>(null)
+  useEffect(() => {
+    if (!ready || target <= 0) {
+      ref.current = false
+      lastTarget.current = target
+      const raf = requestAnimationFrame(() => setValue(target))
+      return () => cancelAnimationFrame(raf)
+    }
+    if (ref.current && lastTarget.current === target) return
+    ref.current = true
+    lastTarget.current = target
+    const start = Date.now()
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 4)
+      const current = eased * target
+      setValue(decimals > 0 ? parseFloat(current.toFixed(decimals)) : Math.floor(current))
+      if (progress >= 1) clearInterval(timer)
+    }, 16)
+    return () => clearInterval(timer)
+  }, [target, duration, decimals, ready])
+  return value
+}
+
+// ── Stat card ──────────────────────────────────────────────────────────────────
+function StatCard({
+  label, value, suffix = '', prefix = '', sub, color = 'blue', delay = 0, ready = false
+}: {
+  label: string
+  value: number
+  suffix?: string
+  prefix?: string
+  sub?: string
+  color?: 'blue' | 'green' | 'purple' | 'amber' | 'rose' | 'cyan'
+  delay?: number
+  ready?: boolean
+}) {
+  const count = useCountUp(value, 1800, suffix === '%' || prefix === '+' ? 2 : 0, ready)
+  const colors = {
+    blue:   'from-blue-500/10 border-blue-500/20 text-blue-400',
+    green:  'from-green-500/10 border-green-500/20 text-green-400',
+    purple: 'from-purple-500/10 border-purple-500/20 text-purple-400',
+    amber:  'from-amber-500/10 border-amber-500/20 text-amber-400',
+    rose:   'from-rose-500/10 border-rose-500/20 text-rose-400',
+    cyan:   'from-cyan-500/10 border-cyan-500/20 text-cyan-400',
+  }
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay, duration: 0.35, ease: 'easeOut' }}
+      className={`bg-gradient-to-br ${colors[color]} border rounded-xl p-5 backdrop-blur-sm`}
+    >
+      <div className={`text-3xl font-bold tabular-nums ${colors[color].split(' ')[2]}`}>
+        {prefix}{typeof count === 'number' && suffix === '%'
+          ? (count).toFixed(2)
+          : typeof count === 'number' && suffix === ''
+          ? count.toLocaleString()
+          : count}
+        {suffix}
+      </div>
+      <div className="text-sm font-medium text-zinc-300 mt-1">{label}</div>
+      {sub && <div className="text-xs text-zinc-600 mt-0.5">{sub}</div>}
+    </motion.div>
+  )
+}
 
 // ── Pipeline step ──────────────────────────────────────────────────────────────
 function PipelineStep({
@@ -174,19 +245,37 @@ export default function HomePage() {
         </div>
       </section>
 
-      {stats ? (
-        <HeroMetrics
-          metrics={[
-            { label: 'Transcripts', value: stats.n_transcripts, hint: '2018–2024', tone: 'neutral' },
-            { label: 'Best IC', value: stats.best_ic, decimals: 4, hint: 'LightGBM', tone: 'positive' },
-            { label: 'Sharpe Lift', value: 3.6, suffix: '×', decimals: 1, hint: '20d vs 5d horizon', tone: 'positive' },
-            { label: 'Best Sector', value: stats.energy_ic, decimals: 3, prefix: '+', hint: 'Energy IC', tone: 'positive' },
-          ]}
-        />
-      ) : (
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-28 rounded-2xl bg-zinc-800/70 animate-pulse" />)}
-        </div>
+      {/* ── Stats grid ───────────────────────────────────────────────────────── */}
+      {!stats && (
+        <motion.div
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        >
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-24 rounded-xl bg-zinc-800 animate-pulse"
+            />
+          ))}
+        </motion.div>
+      )}
+      {stats && (
+        <motion.div
+          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.5, ease: 'easeOut', staggerChildren: 0.06 }}
+        >
+          <StatCard label="Transcripts"    value={stats.n_transcripts} sub="2018–2024"      color="blue"   delay={0.0} ready />
+          <StatCard label="Companies"      value={stats.n_companies}   sub="S&P 500"        color="cyan"   delay={0.05} ready />
+          <StatCard label="Best IC"        value={stats.best_ic}       sub="LightGBM"       color="green"  delay={0.1} ready />
+          <StatCard label="Best Hit Rate"  value={stats.best_hit_rate * 100} suffix="%"  sub="LSTM"  color="purple" delay={0.15} ready />
+          <StatCard label="Energy IC"      value={stats.energy_ic}     sub="Top sector"     color="amber"  delay={0.2} ready />
+          <StatCard label="NLP Features"   value={stats.n_features}    sub="FinBERT + RAG"  color="rose"   delay={0.25} ready />
+        </motion.div>
       )}
 
       {/* ── Pipeline ─────────────────────────────────────────────────────────── */}

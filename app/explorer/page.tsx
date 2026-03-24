@@ -114,27 +114,26 @@ export default function ExplorerPage() {
   const tickerIndex = tickers.findIndex((t) => t.ticker === selectedTicker)
   const prevTicker = tickerIndex > 0 ? tickers[tickerIndex - 1]?.ticker : null
   const nextTicker = tickerIndex >= 0 && tickerIndex < tickers.length - 1 ? tickers[tickerIndex + 1]?.ticker : null
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey) {
-        event.preventDefault()
-        searchInputRef.current?.focus()
-        return
-      }
-      if (event.key === 'ArrowLeft' && prevTicker) {
-        event.preventDefault()
-        setSelectedTicker(prevTicker)
-      }
-      if (event.key === 'ArrowRight' && nextTicker) {
-        event.preventDefault()
-        setSelectedTicker(nextTicker)
-      }
+useEffect(() => {
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+      event.preventDefault()
+      searchInputRef.current?.focus()
+      return
     }
+    if (event.key === 'ArrowLeft' && prevTicker) {
+      event.preventDefault()
+      setSelectedTicker(prevTicker)
+    }
+    if (event.key === 'ArrowRight' && nextTicker) {
+      event.preventDefault()
+      setSelectedTicker(nextTicker)
+    }
+  }
 
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [nextTicker, prevTicker])
+  window.addEventListener('keydown', onKeyDown)
+  return () => window.removeEventListener('keydown', onKeyDown)
+}, [nextTicker, prevTicker])
 
   if (loading) {
     return (
@@ -151,6 +150,7 @@ export default function ExplorerPage() {
         eyebrow="601 Companies · 2018–2024"
         title="Transcript Explorer"
         description="Decision cockpit for single-name transcript intelligence. Find a ticker, inspect regime shifts, and decide whether signal quality supports conviction."
+
       />
 
       <HeroMetrics
@@ -160,12 +160,17 @@ export default function ExplorerPage() {
           { label: 'QA Net', value: currentRow?.qa_net_sentiment ?? 0, decimals: 3, hint: 'Analyst sentiment', tone: (currentRow?.qa_net_sentiment ?? 0) > 0 ? 'positive' : 'warning' },
           { label: '5D Return', value: (ret5d ?? 0) * 100, decimals: 2, suffix: '%', hint: 'Post-call reaction', tone: isUp ? 'positive' : 'warning' },
         ]}
+
       />
 
       {/* Controls */}
       <motion.div
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+
         className="flex flex-col gap-3 sticky top-0 z-30 py-2 bg-[#0b0d13]/85 backdrop-blur-md"
+
+        className="flex flex-col gap-3"
+
       >
         <div className="relative w-full max-w-xl">
           <Search className="absolute left-4 top-3.5 w-5 h-5 text-zinc-500" />

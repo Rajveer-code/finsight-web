@@ -11,7 +11,6 @@ import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
 import { PerformanceBadge } from '@/components/ui/performance-badge'
 import { InsightCard } from '@/components/ui/insight-card'
-import { HeroMetrics } from '@/components/ui/hero-metrics'
 
 const MODEL_COLORS: Record<string, string> = {
   Baseline:     '#f59e0b',
@@ -109,14 +108,24 @@ export default function ModelsPage() {
         description="Train on years T−3 to T−1, test on year T. Zero lookahead bias. IC = Pearson correlation of predictions vs actual returns."
       />
 
-      <HeroMetrics
-        metrics={[
-          { label: 'Best Model IC', value: best?.ic_mean ?? 0, decimals: 4, prefix: '+', hint: best ? (MODEL_LABELS[best.model] || best.model) : '—', tone: 'positive' },
-          { label: 'Reliability Edge', value: stabilityRatio ?? 0, suffix: '×', decimals: 1, hint: 'Baseline std ÷ best std', tone: 'positive' },
-          { label: 'Strongest Year', value: strongestYear?.year ?? 0, hint: strongestYear?.ic ? `IC ${strongestYear.ic.toFixed(4)}` : '—', tone: 'neutral' },
-          { label: 'Test Samples', value: summary.reduce((a, b) => a + b.n_total, 0), hint: yearFilter === 'All' ? 'All years' : `Year ${yearFilter}`, tone: 'neutral' },
-        ]}
-      />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <ChartCard title="Best deployable model" subtitle="Highest mean IC">
+          <div className="text-2xl font-black text-green-400">{best ? (MODEL_LABELS[best.model] || best.model) : '—'}</div>
+          <p className="text-xs text-zinc-400 mt-1">Average IC {best ? `${best.ic_mean > 0 ? '+' : ''}${best.ic_mean.toFixed(4)}` : '—'}</p>
+        </ChartCard>
+        <ChartCard title="Reliability edge" subtitle="Baseline std ÷ best std">
+          <div className="text-2xl font-black text-blue-300">{stabilityRatio ? `${stabilityRatio.toFixed(1)}×` : '—'}</div>
+          <p className="text-xs text-zinc-400 mt-1">Higher = more predictable quarter-to-quarter performance.</p>
+        </ChartCard>
+        <ChartCard title="Strongest year" subtitle="LightGBM yearly peak">
+          <div className="text-2xl font-black text-zinc-100">{strongestYear?.year ?? '—'}</div>
+          <p className="text-xs text-zinc-400 mt-1">{strongestYear?.ic ? `IC ${strongestYear.ic > 0 ? '+' : ''}${strongestYear.ic.toFixed(4)}` : 'No signal'}</p>
+        </ChartCard>
+        <ChartCard title="Analysis scope" subtitle="Out-of-sample test rows">
+          <div className="text-2xl font-black text-zinc-100">{summary.reduce((a, b) => a + b.n_total, 0).toLocaleString()}</div>
+          <p className="text-xs text-zinc-400 mt-1">Walk-forward test points across selected period.</p>
+        </ChartCard>
+      </div>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">

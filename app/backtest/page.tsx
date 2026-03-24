@@ -146,6 +146,32 @@ export default function BacktestPage() {
         </div>
       </section>
 
+      <section className="space-y-4">
+        <h2 className="text-sm uppercase tracking-widest text-zinc-400 font-semibold">Key insights</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <InsightCard
+            title="5-day signal is not deployable after costs"
+            insight="Short-horizon portfolio remains negative on risk-adjusted basis."
+            implication="Do not allocate capital to this horizon without additional execution edge."
+            whyItMatters="A strategy that fails net of costs can still look good visually, so this prevents false deployment."
+            tone="warning"
+          />
+          <InsightCard
+            title="20-day horizon is directionally better"
+            insight="Sharpe and path stability both improve when holding period is longer."
+            implication="Use 20-day rebalance cadence as baseline operating mode."
+            whyItMatters="The signal appears to require time for market absorption (post-earnings drift)."
+            tone="positive"
+          />
+          <InsightCard
+            title="Treat as a portfolio sleeve, not standalone alpha"
+            insight="Even improved horizon still shows weak absolute economics."
+            implication="Combine with orthogonal factors and strict risk controls."
+            whyItMatters="Composite strategies can monetize weak standalone signals more reliably."
+          />
+        </div>
+      </section>
+
       {/* View toggle */}
       <div className="flex gap-2">
         {(['5d', '20d', 'compare'] as const).map(v => (
