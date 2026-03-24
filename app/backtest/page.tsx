@@ -4,12 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  ReferenceLine, ComposedChart, ReferenceDot, Label
+  ReferenceLine, ReferenceDot, Label
 } from 'recharts'
 import type { BacktestRow } from '@/lib/types'
 import { fetchData } from '@/lib/types'
 import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
+import { InsightCard } from '@/components/ui/insight-card'
+import { HeroMetrics } from '@/components/ui/hero-metrics'
 
 function computeMetrics(rows: BacktestRow[], retCol: keyof BacktestRow) {
   const rets = rows.map(r => r[retCol] as number).filter(v => v != null)
@@ -101,7 +103,7 @@ export default function BacktestPage() {
     .map(r => ({ period: `${r.year}-Q${r.quarter}`, ret: r.net_ret }))
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 space-y-10">
+    <div className="app-container space-y-10">
 
       <PageHeader
         eyebrow="Long-Short Quartile · 10bps TC · 2021–2024"
@@ -109,26 +111,40 @@ export default function BacktestPage() {
         description="Long top-25% predicted stocks, short bottom-25%. 5-day and 20-day holding periods. 10 basis points round-trip transaction cost applied per leg."
       />
 
-      <div className="flex items-center gap-8 mb-6 p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl">
-        <div className="text-center">
-          <div className="text-3xl font-black text-red-400">-0.81</div>
-          <div className="text-xs text-zinc-600">5-day Sharpe</div>
+      <HeroMetrics
+        metrics={[
+          { label: '5D Sharpe', value: m5?.sharpe ?? -0.81, decimals: 2, tone: 'warning', hint: 'After costs' },
+          { label: '20D Sharpe', value: m20?.sharpe ?? -0.23, decimals: 2, tone: 'neutral', hint: 'After costs' },
+          { label: 'Sharpe Lift', value: 3.6, suffix: '×', decimals: 1, tone: 'positive', hint: '20D vs 5D horizon' },
+          { label: 'Best Win Rate', value: Math.max(m5?.hit ?? 0, m20?.hit ?? 0) * 100, suffix: '%', decimals: 1, tone: 'neutral', hint: 'Quarterly hit ratio' },
+        ]}
+      />
+
+      <section className="space-y-4">
+        <h2 className="text-sm uppercase tracking-widest text-zinc-400 font-semibold">Key insights</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <InsightCard
+            title="5-day signal is not deployable after costs"
+            insight="Short-horizon portfolio remains negative on risk-adjusted basis."
+            implication="Do not allocate capital to this horizon without additional execution edge."
+            whyItMatters="A strategy that fails net of costs can still look good visually, so this prevents false deployment."
+            tone="warning"
+          />
+          <InsightCard
+            title="20-day horizon is directionally better"
+            insight="Sharpe and path stability both improve when holding period is longer."
+            implication="Use 20-day rebalance cadence as baseline operating mode."
+            whyItMatters="The signal appears to require time for market absorption (post-earnings drift)."
+            tone="positive"
+          />
+          <InsightCard
+            title="Treat as a portfolio sleeve, not standalone alpha"
+            insight="Even improved horizon still shows weak absolute economics."
+            implication="Combine with orthogonal factors and strict risk controls."
+            whyItMatters="Composite strategies can monetize weak standalone signals more reliably."
+          />
         </div>
-        <div className="text-2xl text-zinc-700">→</div>
-        <div className="text-center">
-          <div className="text-3xl font-black text-amber-400">-0.23</div>
-          <div className="text-xs text-zinc-600">20-day Sharpe</div>
-        </div>
-        <div className="text-2xl text-zinc-700">→</div>
-        <div className="flex-1">
-          <div className="text-sm font-semibold text-blue-400">
-            3.6× improvement with longer holding period
-          </div>
-          <div className="text-xs text-zinc-500 mt-1">
-            Consistent with PEAD theory (Bernard & Thomas 1989). Signal takes time to be fully priced.
-          </div>
-        </div>
-      </div>
+      </section>
 
       {/* View toggle */}
       <div className="flex gap-2">
@@ -166,7 +182,7 @@ export default function BacktestPage() {
         )}
       </AnimatePresence>
 
-      {/* 5d vs 20d comparison metrics */}
+      {/* Primary chart context: 5d vs 20d decision table */}
       {view === 'compare' && m5 && m20 && (
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -207,7 +223,7 @@ export default function BacktestPage() {
         </motion.div>
       )}
 
-      {/* Metrics + charts section with animated view changes */}
+      {/* Supporting charts */}
       <AnimatePresence mode="wait">
         <motion.div
           key={`charts-${view}`}
@@ -225,7 +241,10 @@ export default function BacktestPage() {
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
             <ChartCard
-              title={view === 'compare' ? '5-Day vs 20-Day Cumulative Return' : `${view.toUpperCase()} Holding Period — Cumulative Return`}
+              title={view === 'compare'
+                ? 'Conclusion: longer holding period preserves capital better'
+                : `Conclusion: ${view.toUpperCase()} horizon shows weak compounding after costs`}
+              subtitle="Primary question: which rebalance horizon is less fragile?"
             >
               <div className="h-[200px] md:h-[280px]">
               <ResponsiveContainer width="100%" height="100%">

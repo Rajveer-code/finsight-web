@@ -9,6 +9,8 @@ import type { SHAPRow } from '@/lib/types'
 import { fetchData } from '@/lib/types'
 import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
+import { InsightCard } from '@/components/ui/insight-card'
+import { HeroMetrics } from '@/components/ui/hero-metrics'
 
 function featColor(name: string) {
   if (name.startsWith('rag_'))  return '#3b82f6'
@@ -75,6 +77,7 @@ const colorMap: Record<string, string> = { blue: 'text-blue-400 bg-blue-500/10 b
 
 export default function FeaturesPage() {
   const [shap, setShap] = useState<SHAPRow[]>([])
+  const [groupFilter, setGroupFilter] = useState<'All' | 'RAG' | 'Mgmt FinBERT' | 'QA FinBERT'>('All')
 
   useEffect(() => {
     fetchData<SHAPRow[]>('shap.json').then(setShap).catch(() => {})
@@ -99,15 +102,64 @@ export default function FeaturesPage() {
     name, value: parseFloat(value.toFixed(4)),
     color: name === 'RAG' ? '#3b82f6' : name === 'Mgmt FinBERT' ? '#22c55e' : name === 'QA FinBERT' ? '#f59e0b' : '#a855f7'
   }))
+  const filteredTop20 = groupFilter === 'All' ? top20 : top20.filter((f) => f.group === groupFilter)
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 space-y-10">
+    <div className="app-container space-y-10">
 
       <PageHeader
         eyebrow="SHAP · LightGBM · Full Dataset"
         title="Feature Importance"
         description="SHapley Additive exPlanations on LightGBM trained across the full dataset. Shows which features actually drive predictions vs which are noise."
       />
+
+      <HeroMetrics
+        metrics={[
+          { label: 'Top Driver', value: top20[0]?.shap ?? 0, decimals: 4, hint: top20[0]?.shortLabel ?? '—', tone: 'positive' },
+          { label: 'Top-20 Power', value: ((top20.reduce((a, b) => a + b.shap, 0) / (shap.reduce((a, b) => a + b.shap, 0) || 1)) * 100), suffix: '%', decimals: 0, hint: 'Concentration of signal', tone: 'neutral' },
+          { label: 'Feature Families', value: pieData.length, hint: 'RAG + FinBERT groups', tone: 'neutral' },
+          { label: 'Lens', value: filteredTop20.length, hint: `${groupFilter} features shown`, tone: 'warning' },
+        ]}
+      />
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm uppercase tracking-widest text-zinc-400 font-semibold">Key insights</h2>
+          <select
+            value={groupFilter}
+            onChange={(e) => setGroupFilter(e.target.value as 'All' | 'RAG' | 'Mgmt FinBERT' | 'QA FinBERT')}
+            className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-zinc-300"
+            title="Filter features by source to see where the model's edge comes from."
+          >
+            <option value="All">All groups</option>
+            <option value="RAG">RAG</option>
+            <option value="Mgmt FinBERT">Mgmt FinBERT</option>
+            <option value="QA FinBERT">QA FinBERT</option>
+          </select>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <InsightCard
+            title="Analyst challenge language is most predictive"
+            insight="Q&A negativity and scrutiny terms dominate top rankings."
+            implication="Prioritize coverage where analyst pushback rises quarter-over-quarter."
+            whyItMatters="Markets react more when uncertainty is externalized during Q&A."
+            tone="warning"
+          />
+          <InsightCard
+            title="Management consistency matters"
+            insight="Volatile management tone often precedes larger future dispersion."
+            implication="Use tone volatility as a position-sizing modifier, not just direction signal."
+            whyItMatters="It improves risk-adjusted portfolio construction."
+          />
+          <InsightCard
+            title="Context features are additive, not dominant"
+            insight="RAG signals help, but sentiment behavior still drives most edge."
+            implication="Invest first in transcript quality and linguistic feature reliability."
+            whyItMatters="Model performance degrades quickly when base text features are noisy."
+            tone="positive"
+          />
+        </div>
+      </section>
 
       {/* Top 20 bar chart + pie */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -119,12 +171,12 @@ export default function FeaturesPage() {
           className="lg:col-span-2"
         >
           <ChartCard
-            title="Top 20 Features by Mean |SHAP|"
-            subtitle="Colour: 🔵 RAG · 🟢 Mgmt FinBERT · 🟠 QA FinBERT"
+            title="Conclusion: only a handful of feature families explain most prediction power"
+            subtitle="Primary question: which factor should you monitor each earnings season?"
           >
             <div className="h-[260px] md:h-[360px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={[...top20].reverse()} layout="vertical" barSize={16}>
+              <BarChart data={[...filteredTop20].reverse()} layout="vertical" barSize={16}>
                 <CartesianGrid stroke="#1a1f2e" strokeOpacity={0.5} horizontal={false} />
                 <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false}>
                   <Label
@@ -160,7 +212,7 @@ export default function FeaturesPage() {
                   animationDuration={800}
                   animationEasing="ease-out"
                 >
-                  {[...top20].reverse().map((entry, i) => (
+                  {[...filteredTop20].reverse().map((entry, i) => (
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Bar>
@@ -178,8 +230,8 @@ export default function FeaturesPage() {
           className="flex flex-col"
         >
           <ChartCard
-            title="Importance by Group"
-            subtitle="Total SHAP contribution"
+            title="Conclusion: feature family mix determines model robustness"
+            subtitle="Use this to decide where to invest additional feature engineering effort."
             className="flex-1 flex flex-col"
           >
             <div className="flex-1 flex items-center justify-center">
@@ -225,10 +277,10 @@ export default function FeaturesPage() {
         </motion.div>
       </div>
 
-      {/* Top 5 insight cards */}
+      {/* Supporting insights */}
       <div>
         <div className="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-5">
-          Top 5 Feature Insights
+          Supporting insights from top-ranked features
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {insights.map((item, i) => (
