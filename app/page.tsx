@@ -11,19 +11,23 @@ import type { Stats, YearDist, SentYear, ModelResult } from '@/lib/types'
 import { fetchData } from '@/lib/types'
 import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
+import { InsightCard } from '@/components/ui/insight-card'
 
 // ── Animated counter ───────────────────────────────────────────────────────────
 function useCountUp(target: number, duration = 1800, decimals = 0, ready = false) {
   const [value, setValue] = useState(0)
   const ref = useRef(false)
+  const lastTarget = useRef<number | null>(null)
   useEffect(() => {
     if (!ready || target <= 0) {
       ref.current = false
-      setValue(target)
-      return
+      lastTarget.current = target
+      const raf = requestAnimationFrame(() => setValue(target))
+      return () => cancelAnimationFrame(raf)
     }
-    if (ref.current && value === target) return
+    if (ref.current && lastTarget.current === target) return
     ref.current = true
+    lastTarget.current = target
     const start = Date.now()
     const timer = setInterval(() => {
       const elapsed = Date.now() - start
@@ -172,7 +176,7 @@ export default function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 space-y-14">
+    <div className="min-h-screen app-container space-y-14">
 
       {/* ── Hero / Page header ─────────────────────────────────────────────── */}
       <div className="relative pt-6 space-y-4">
@@ -214,6 +218,32 @@ export default function HomePage() {
           }
         />
       </div>
+
+      <section className="space-y-4">
+        <h2 className="text-sm uppercase tracking-widest text-zinc-400 font-semibold">Key insights</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <InsightCard
+            title="Signal quality is highly uneven across sectors"
+            insight="Energy and Industrials show strong predictability while Technology is near-noise."
+            implication="Deploy sector-aware capital allocation instead of uniform market-wide exposure."
+            whyItMatters="Most performance lift comes from selecting where the model is structurally advantaged."
+            tone="positive"
+          />
+          <InsightCard
+            title="Model choice affects reliability more than headline accuracy"
+            insight="LightGBM’s stability is materially stronger than baseline alternatives."
+            implication="Prioritize low-variance model behavior for live risk management."
+            whyItMatters="Consistent signals support cleaner position sizing and lower drawdown surprises."
+          />
+          <InsightCard
+            title="Short holding windows remain fragile"
+            insight="Backtests indicate weak profitability net of costs at 5-day horizon."
+            implication="Default to longer holding windows until execution edge improves."
+            whyItMatters="Protects against overtrading a statistically weak short-term effect."
+            tone="warning"
+          />
+        </div>
+      </section>
 
       {/* ── Stats grid ───────────────────────────────────────────────────────── */}
       {!stats && (

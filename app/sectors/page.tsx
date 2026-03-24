@@ -10,6 +10,7 @@ import { fetchData } from '@/lib/types'
 import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
 import { PerformanceBadge } from '@/components/ui/performance-badge'
+import { InsightCard } from '@/components/ui/insight-card'
 
 const SECTOR_INSIGHTS: Record<string, string> = {
   Energy: 'Concrete numerical guidance (barrels/day, margins) makes earnings highly predictable. High information asymmetry with commodity price exposure.',
@@ -27,6 +28,7 @@ const SECTOR_INSIGHTS: Record<string, string> = {
 
 export default function SectorsPage() {
   const [sectors, setSectors] = useState<SectorRow[]>([])
+  const [sectorFilter, setSectorFilter] = useState<string>('All')
 
   useEffect(() => {
     fetchData<SectorRow[]>('sector_ic.json').then(d => {
@@ -34,7 +36,8 @@ export default function SectorsPage() {
     }).catch(() => { })
   }, [])
 
-  const chartData = sectors.map(s => ({
+  const filteredSectors = sectorFilter === 'All' ? sectors : sectors.filter((s) => s.sector === sectorFilter)
+  const chartData = filteredSectors.map(s => ({
     sector: s.sector,
     ic: s.ic_mean,
     std: s.ic_std,
@@ -42,10 +45,12 @@ export default function SectorsPage() {
     n: s.n_test_avg,
   }))
 
-  const max = Math.max(...sectors.map(s => Math.abs(s.ic_mean)), 0.01)
+  const max = Math.max(...filteredSectors.map(s => Math.abs(s.ic_mean)), 0.01)
+  const topSector = sectors[0]
+  const bottomSector = sectors[sectors.length - 1]
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 space-y-10">
+    <div className="app-container space-y-10">
 
       <PageHeader
         eyebrow="GICS Sectors · Walk-forward 2021–2024"
@@ -69,6 +74,43 @@ export default function SectorsPage() {
         </div>
       </div>
 
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm uppercase tracking-widest text-zinc-400 font-semibold">Key insights</h2>
+          <select
+            value={sectorFilter}
+            onChange={(e) => setSectorFilter(e.target.value)}
+            className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-zinc-300"
+            title="Filter to isolate one sector and understand sector-specific deployability."
+          >
+            <option value="All">All sectors</option>
+            {sectors.map((s) => <option key={s.sector} value={s.sector}>{s.sector}</option>)}
+          </select>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <InsightCard
+            title="Deploy selectively by sector"
+            insight={`Top signal is ${topSector?.sector ?? '—'} while weakest is ${bottomSector?.sector ?? '—'}.`}
+            implication="Build sector-aware position sizing rather than a uniform cross-sector model."
+            whyItMatters="Sector heterogeneity can dominate model quality; one-size-fits-all allocation burns edge."
+            tone="positive"
+          />
+          <InsightCard
+            title="Technology signal is near efficient-market floor"
+            insight="Narrative-heavy guidance in large-cap tech is rapidly priced by the market."
+            implication="Lower expected alpha; keep tech weight capped unless supported by non-NLP factors."
+            whyItMatters="Prevents over-allocating to highly competitive information environments."
+            tone="warning"
+          />
+          <InsightCard
+            title="Energy and Industrials behave as information-asymmetric sectors"
+            insight="Operational disclosures remain concrete and slower to be fully priced."
+            implication="Prioritize NLP feature depth and earnings-event workflows in those sectors."
+            whyItMatters="This is where marginal modeling effort should generate the most ROI."
+          />
+        </div>
+      </section>
+
       {/* IC bar chart */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -77,8 +119,8 @@ export default function SectorsPage() {
         transition={{ duration: 0.4, ease: 'easeOut', delay: 0.2 }}
       >
         <ChartCard
-          title="IC by Sector"
-          subtitle="Error bars = ±1 standard deviation across test years"
+          title="Conclusion: alpha is concentrated in a few sectors, not evenly distributed"
+          subtitle="Primary question: where should NLP-driven capital be concentrated?"
         >
           <div className="h-[200px] md:h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -147,7 +189,7 @@ export default function SectorsPage() {
         </ChartCard>
       </motion.div>
 
-      {/* Sector detail table */}
+      {/* Supporting ranking table */}
       <motion.div
         initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
         className="bg-zinc-900/50 border border-zinc-800/60 rounded-xl overflow-hidden"
@@ -165,7 +207,7 @@ export default function SectorsPage() {
               </tr>
             </thead>
             <tbody>
-              {sectors.map((s, i) => {
+              {filteredSectors.map((s, i) => {
                 const barWidth = Math.abs(s.ic_mean) / max * 100
                 return (
                   <motion.tr
@@ -210,7 +252,7 @@ export default function SectorsPage() {
       <div>
         <div className="text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-5">Why Each Sector Behaves This Way</div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {sectors.map((s, i) => (
+          {filteredSectors.map((s, i) => (
             <motion.div
               key={s.sector}
               initial={{ opacity: 0, y: 8 }}

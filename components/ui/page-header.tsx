@@ -18,22 +18,21 @@ export function PageHeader({
   actions,
 }: PageHeaderProps) {
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-3", className)}>
       {eyebrow && (
-        <div className="text-[10px] font-semibold uppercase tracking-[0.15em] text-zinc-600">
+        <div className="inline-flex text-[10px] font-semibold uppercase tracking-[0.17em] text-blue-300/80 bg-blue-500/10 border border-blue-500/20 rounded-full px-2.5 py-1">
           {eyebrow}
         </div>
       )}
-      <h1 className="text-[28px] sm:text-[32px] font-black tracking-tight text-white">
+      <h1 className="text-[30px] sm:text-[38px] font-black tracking-tight text-white leading-[1.05]">
         {title}
       </h1>
       {description && (
-        <p className="text-[13px] text-zinc-400 leading-relaxed max-w-2xl">
+        <p className="text-[14px] text-zinc-300/90 leading-relaxed max-w-3xl">
           {description}
         </p>
       )}
-      {actions && <div className="pt-3 flex flex-wrap gap-3">{actions}</div>}
+      {actions && <div className="pt-2 flex flex-wrap gap-3">{actions}</div>}
     </div>
   )
 }
-

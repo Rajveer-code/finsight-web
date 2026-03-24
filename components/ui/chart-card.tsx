@@ -18,18 +18,17 @@ export function ChartCard({
   return (
     <div
       className={cn(
-        "bg-zinc-900/50 border border-zinc-800/60 rounded-xl p-5 transition-colors hover:border-zinc-700/80",
+        "glass-panel rounded-2xl p-5 sm:p-6 transition-all hover:border-zinc-500/60 hover:shadow-[0_30px_60px_-35px_rgba(99,102,241,.75)]",
         className,
       )}
     >
-      <div className="mb-4">
-        <div className="text-sm font-semibold text-zinc-300">{title}</div>
+      <div className="mb-5">
+        <div className="text-sm font-semibold text-zinc-100">{title}</div>
         {subtitle && (
-          <div className="text-xs text-zinc-600 mt-0.5">{subtitle}</div>
+          <div className="text-xs text-zinc-400 mt-1">{subtitle}</div>
         )}
       </div>
       {children}
     </div>
   )
 }
-

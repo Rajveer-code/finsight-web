@@ -10,6 +10,7 @@ import type { BacktestRow } from '@/lib/types'
 import { fetchData } from '@/lib/types'
 import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
+import { InsightCard } from '@/components/ui/insight-card'
 
 function computeMetrics(rows: BacktestRow[], retCol: keyof BacktestRow) {
   const rets = rows.map(r => r[retCol] as number).filter(v => v != null)
@@ -101,7 +102,7 @@ export default function BacktestPage() {
     .map(r => ({ period: `${r.year}-Q${r.quarter}`, ret: r.net_ret }))
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 space-y-10">
+    <div className="app-container space-y-10">
 
       <PageHeader
         eyebrow="Long-Short Quartile · 10bps TC · 2021–2024"
@@ -129,6 +130,32 @@ export default function BacktestPage() {
           </div>
         </div>
       </div>
+
+      <section className="space-y-4">
+        <h2 className="text-sm uppercase tracking-widest text-zinc-400 font-semibold">Key insights</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <InsightCard
+            title="5-day signal is not deployable after costs"
+            insight="Short-horizon portfolio remains negative on risk-adjusted basis."
+            implication="Do not allocate capital to this horizon without additional execution edge."
+            whyItMatters="A strategy that fails net of costs can still look good visually, so this prevents false deployment."
+            tone="warning"
+          />
+          <InsightCard
+            title="20-day horizon is directionally better"
+            insight="Sharpe and path stability both improve when holding period is longer."
+            implication="Use 20-day rebalance cadence as baseline operating mode."
+            whyItMatters="The signal appears to require time for market absorption (post-earnings drift)."
+            tone="positive"
+          />
+          <InsightCard
+            title="Treat as a portfolio sleeve, not standalone alpha"
+            insight="Even improved horizon still shows weak absolute economics."
+            implication="Combine with orthogonal factors and strict risk controls."
+            whyItMatters="Composite strategies can monetize weak standalone signals more reliably."
+          />
+        </div>
+      </section>
 
       {/* View toggle */}
       <div className="flex gap-2">
@@ -166,7 +193,7 @@ export default function BacktestPage() {
         )}
       </AnimatePresence>
 
-      {/* 5d vs 20d comparison metrics */}
+      {/* Primary chart context: 5d vs 20d decision table */}
       {view === 'compare' && m5 && m20 && (
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -207,7 +234,7 @@ export default function BacktestPage() {
         </motion.div>
       )}
 
-      {/* Metrics + charts section with animated view changes */}
+      {/* Supporting charts */}
       <AnimatePresence mode="wait">
         <motion.div
           key={`charts-${view}`}
@@ -225,7 +252,10 @@ export default function BacktestPage() {
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
             <ChartCard
-              title={view === 'compare' ? '5-Day vs 20-Day Cumulative Return' : `${view.toUpperCase()} Holding Period — Cumulative Return`}
+              title={view === 'compare'
+                ? 'Conclusion: longer holding period preserves capital better'
+                : `Conclusion: ${view.toUpperCase()} horizon shows weak compounding after costs`}
+              subtitle="Primary question: which rebalance horizon is less fragile?"
             >
               <div className="h-[200px] md:h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
