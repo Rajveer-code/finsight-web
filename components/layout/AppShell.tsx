@@ -22,16 +22,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <div className="flex flex-col md:flex-row md:h-screen overflow-hidden">
+    <div className="relative flex flex-col md:flex-row md:h-screen overflow-hidden">
       {/* Mobile top bar */}
-      <div className="flex md:hidden items-center justify-between h-12 px-4 sm:px-6 lg:px-8 bg-[#08090d] border-b border-zinc-800/60">
+      <div className="flex md:hidden items-center justify-between h-14 px-4 sm:px-6 lg:px-8 bg-zinc-950/85 backdrop-blur-xl border-b border-zinc-700/40">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-900/40">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-violet-500 flex items-center justify-center shadow-lg shadow-violet-900/40">
             <TrendingUp className="w-4 h-4 text-white" />
           </div>
           <div>
             <div className="font-semibold text-sm leading-none">FinSight</div>
-            <div className="text-[10px] text-zinc-500 mt-0.5">Earnings Intelligence</div>
+            <div className="text-[10px] text-zinc-400 mt-0.5">Quant Research OS</div>
           </div>
         </div>
         <button
@@ -52,14 +52,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main content */}
       <div
         className="flex-1 overflow-y-auto scroll-smooth"
-        style={{
-          backgroundImage: 'radial-gradient(circle, #1e2433 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        }}
       >
-        <PageTransition>
-          {children}
-        </PageTransition>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(148,163,184,.09)_1px,transparent_1px)] [background-size:22px_22px]" />
+        <PageTransition>{children}</PageTransition>
         <KeyboardShortcutHelp />
         <AnimatePresence>
           {showScrollTop && (
@@ -70,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               exit={{ opacity: 0, scale: 0.8 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="fixed bottom-4 left-4 z-50 w-8 h-8 rounded-full bg-zinc-800/90 border border-zinc-700 flex items-center justify-center text-zinc-200 hover:bg-zinc-700/90 hover:border-zinc-500 transition-colors"
+              className="fixed bottom-4 left-4 z-50 w-9 h-9 rounded-full bg-zinc-900/90 border border-zinc-600/80 backdrop-blur-sm flex items-center justify-center text-zinc-200 hover:bg-zinc-800/90 hover:border-zinc-500 transition-colors"
               aria-label="Scroll to top"
             >
               <ChevronUp className="w-4 h-4" />
@@ -78,7 +73,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           )}
         </AnimatePresence>
 
-        <footer className="mt-16 pt-6 border-t border-zinc-800/40 flex items-center justify-between text-[11px] text-zinc-700 px-4 sm:px-6 lg:px-8 pb-6">
+        <footer className="mt-16 pt-6 border-t border-zinc-800/40 flex items-center justify-between text-[11px] text-zinc-500 px-4 sm:px-6 lg:px-8 pb-6">
           <span>FinSight © 2026 · Rajveer Singh Pall</span>
           <div className="flex items-center gap-4">
             <a
@@ -119,7 +114,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               animate={{ x: 0 }}
               exit={{ x: -224 }}
               transition={{ type: 'spring', stiffness: 400, damping: 40 }}
-              className="relative h-full w-56 bg-[#08090d] border-r border-zinc-800/60 shadow-xl"
+              className="relative h-full w-64 bg-zinc-950/95 backdrop-blur-2xl border-r border-zinc-700/50 shadow-2xl"
             >
               <Sidebar isOpen onClose={() => setSidebarOpen(false)} />
             </motion.aside>
@@ -129,4 +124,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   )
 }
-

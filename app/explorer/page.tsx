@@ -11,6 +11,7 @@ import type { ExplorerRow, TickerRow } from '@/lib/types'
 import { fetchData } from '@/lib/types'
 import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
+import { InsightCard } from '@/components/ui/insight-card'
 
 function ScoreBar({ label, value, invert = false, order = 0 }: { label: string; value: number | null; invert?: boolean; order?: number }) {
   if (value == null || isNaN(value)) return null
@@ -108,6 +109,9 @@ export default function ExplorerPage() {
 
   const ret5d = currentRow?.ret_5d
   const isUp = ret5d != null && ret5d > 0
+  const tickerIndex = tickers.findIndex((t) => t.ticker === selectedTicker)
+  const prevTicker = tickerIndex > 0 ? tickers[tickerIndex - 1]?.ticker : null
+  const nextTicker = tickerIndex >= 0 && tickerIndex < tickers.length - 1 ? tickers[tickerIndex + 1]?.ticker : null
 
   if (loading) {
     return (
@@ -118,48 +122,48 @@ export default function ExplorerPage() {
   }
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10 space-y-8">
+    <div className="app-container space-y-8">
 
       <PageHeader
         eyebrow="601 Companies · 2018–2024"
         title="Transcript Explorer"
-        description="Browse the NLP sentiment profile for any S&P 500 company and earnings quarter."
+        description="Decision cockpit for single-name transcript intelligence. Find a ticker, inspect regime shifts, and decide whether signal quality supports conviction."
       />
 
       {/* Controls */}
       <motion.div
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-        className="flex flex-col sm:flex-row flex-wrap gap-4 items-start"
+        className="flex flex-col gap-3"
       >
-        {/* Ticker search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 w-4 h-4 text-zinc-600" />
+        <div className="relative w-full max-w-xl">
+          <Search className="absolute left-4 top-3.5 w-5 h-5 text-zinc-500" />
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search ticker..."
-            className="pl-9 pr-4 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-sm text-zinc-300 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500 w-44"
+            placeholder="Search ticker (e.g., AAPL, NVDA, XOM)"
+            className="w-full pl-12 pr-4 py-3 bg-zinc-900 border border-zinc-700 rounded-xl text-base text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-blue-500"
           />
           {search && (
-            <div className="absolute top-full mt-1 w-44 bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden shadow-xl z-10 max-h-48 overflow-y-auto">
+            <div className="absolute top-full mt-1 w-full bg-zinc-900 border border-zinc-700 rounded-lg overflow-hidden shadow-xl z-10 max-h-56 overflow-y-auto">
               {filteredTickers.map(t => (
                 <button key={t.ticker}
                   onClick={() => { setSelectedTicker(t.ticker); setSearch('') }}
                   className="w-full px-3 py-2 text-left text-sm text-zinc-300 hover:bg-zinc-800 flex items-center justify-between"
                 >
                   <span className="font-mono font-semibold">{t.ticker}</span>
-                  <span className={`text-xs ${t.mgmt_sent > 0.3 ? 'text-green-400' : 'text-zinc-600'}`}>
-                    {t.mgmt_sent?.toFixed(2)}
-                  </span>
+                  <span className={`text-xs ${t.mgmt_sent > 0.3 ? 'text-green-400' : 'text-zinc-600'}`}>{t.mgmt_sent?.toFixed(2)}</span>
                 </button>
               ))}
             </div>
           )}
         </div>
-
-        <div className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg">
-          <span className="text-xs text-zinc-500">Ticker:</span>
-          <span className="text-sm font-mono font-bold text-white">{selectedTicker}</span>
+        <div className="flex flex-wrap gap-2 items-center">
+          <button disabled={!prevTicker} onClick={() => prevTicker && setSelectedTicker(prevTicker)} className="px-3 py-2 rounded-lg border border-zinc-700 text-xs text-zinc-300 disabled:opacity-40">← Prev</button>
+          <button disabled={!nextTicker} onClick={() => nextTicker && setSelectedTicker(nextTicker)} className="px-3 py-2 rounded-lg border border-zinc-700 text-xs text-zinc-300 disabled:opacity-40">Next →</button>
+          <div className="flex items-center gap-2 px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg">
+            <span className="text-xs text-zinc-500">Ticker:</span>
+            <span className="text-sm font-mono font-bold text-white">{selectedTicker}</span>
+          </div>
         </div>
 
         <select value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}
@@ -182,6 +186,31 @@ export default function ExplorerPage() {
           </div>
         )}
       </motion.div>
+
+      <section className="space-y-4">
+        <h2 className="text-sm uppercase tracking-widest text-zinc-400 font-semibold">Key insights</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <InsightCard
+            title="Start with recent return reaction"
+            insight={ret5d != null ? `${selectedTicker} moved ${(ret5d * 100).toFixed(2)}% after this call.` : 'Return impact unavailable for current selection.'}
+            implication="Use as first-pass signal validation before diving into feature-level detail."
+            whyItMatters="You want to know immediately whether sentiment linked to tradable price response."
+            tone={isUp ? 'positive' : 'warning'}
+          />
+          <InsightCard
+            title="Compare management vs analyst tone divergence"
+            insight="Large gap between management optimism and Q&A negativity often flags fragile narratives."
+            implication="Escalate names with widening divergence for deeper fundamental review."
+            whyItMatters="Divergence can indicate unresolved risk not reflected in prepared remarks."
+          />
+          <InsightCard
+            title="Use trend panel for regime change detection"
+            insight="Quarterly sentiment trend is more informative than single-point snapshots."
+            implication="Prioritize names showing persistent deterioration across multiple calls."
+            whyItMatters="Regime shifts often precede estimate revisions and valuation rerating."
+          />
+        </div>
+      </section>
 
       <AnimatePresence mode="wait">
         {currentRow ? (
