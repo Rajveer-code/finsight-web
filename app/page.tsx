@@ -1,11 +1,11 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
-import { motion, useInView } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, Label, Legend, ReferenceLine, Cell
+  CartesianGrid, Tooltip, ResponsiveContainer, Label, Legend, ReferenceLine, Cell
 } from 'recharts'
-import { ArrowRight, TrendingUp, Database, Brain, Activity, Zap, Globe2, ExternalLink, BarChart2 } from 'lucide-react'
+import { ArrowRight, Database, Brain, Activity, Globe2, ExternalLink, BarChart2 } from 'lucide-react'
 import Link from 'next/link'
 import type { Stats, YearDist, SentYear, ModelResult } from '@/lib/types'
 import { fetchData } from '@/lib/types'
@@ -513,7 +513,7 @@ export default function HomePage() {
                 animationDuration={800}
                 animationEasing="ease-out"
               >
-                {modelSummary.map((entry, idx) => (
+                {modelSummary.map((entry) => (
                   <Cell
                     key={entry.model}
                     fill={entry.ic > 0 ? '#22c55e' : entry.ic < 0 ? '#ef4444' : '#6b7280'}

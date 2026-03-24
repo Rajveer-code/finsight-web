@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   TrendingUp, BarChart2, Zap, Activity,
-  Globe2, Search, BookOpen, ExternalLink, Github, X
+  Globe2, Search, ExternalLink, Github, X
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 

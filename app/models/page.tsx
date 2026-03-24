@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine, ReferenceArea, Label, Cell
+  CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea, Label, Cell
 } from 'recharts'
 import type { ModelResult } from '@/lib/types'
 import { fetchData } from '@/lib/types'
@@ -28,24 +28,6 @@ const MODEL_LABELS: Record<string, string> = {
   XGBoost_all:  'XGBoost',
   LightGBM_all: 'LightGBM ★',
   LSTM:         'LSTM',
-}
-
-const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{color: string; name: string; value: number}>; label?: string }) => {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-xs shadow-xl">
-      <div className="font-semibold text-zinc-300 mb-2">Year {label}</div>
-      {payload.map((p, i) => (
-        <div key={i} className="flex items-center gap-2 py-0.5">
-          <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
-          <span className="text-zinc-400 w-28">{p.name}:</span>
-          <span className={`font-medium ${p.value > 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {p.value > 0 ? '+' : ''}{p.value.toFixed(4)}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
 }
 
 export default function ModelsPage() {

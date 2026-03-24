@@ -58,21 +58,51 @@ export default function SectorsPage() {
         description="Does the NLP signal vary across sectors? Short answer: dramatically. Energy IC = +0.31 vs Technology IC ≈ 0. Consistent with efficient market theory by sector."
       />
 
-      {/* Insight callout */}
-      <div className="flex items-baseline gap-4 mb-2">
-        <span className="text-6xl font-black text-green-400 tabular-nums">
-          +0.311
-        </span>
-        <div>
-          <div className="text-lg font-bold text-zinc-200">Energy IC</div>
-          <div className="text-sm text-zinc-500">
-            83× stronger signal than Technology (IC ≈ 0.004)
-          </div>
-          <div className="text-xs text-zinc-600 mt-1">
-            Consistent with efficient market hypothesis by sector
-          </div>
+      <HeroMetrics
+        metrics={[
+          { label: 'Best Sector IC', value: topSector?.ic_mean ?? 0.311, decimals: 3, prefix: '+', hint: topSector?.sector ?? 'Energy', tone: 'positive' },
+          { label: 'Weakest Sector IC', value: bottomSector?.ic_mean ?? 0, decimals: 3, hint: bottomSector?.sector ?? 'Technology', tone: 'warning' },
+          { label: 'Signal Spread', value: (topSector?.ic_mean ?? 0) - (bottomSector?.ic_mean ?? 0), decimals: 3, prefix: '+', hint: 'Top minus bottom IC', tone: 'positive' },
+          { label: 'Sectors Covered', value: sectors.length, hint: 'Cross-sector scope', tone: 'neutral' },
+        ]}
+      />
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm uppercase tracking-widest text-zinc-400 font-semibold">Key insights</h2>
+          <select
+            value={sectorFilter}
+            onChange={(e) => setSectorFilter(e.target.value)}
+            className="px-3 py-2 bg-zinc-900 border border-zinc-700 rounded-lg text-xs text-zinc-300"
+            title="Filter to isolate one sector and understand sector-specific deployability."
+          >
+            <option value="All">All sectors</option>
+            {sectors.map((s) => <option key={s.sector} value={s.sector}>{s.sector}</option>)}
+          </select>
         </div>
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <InsightCard
+            title="Deploy selectively by sector"
+            insight={`Top signal is ${topSector?.sector ?? '—'} while weakest is ${bottomSector?.sector ?? '—'}.`}
+            implication="Build sector-aware position sizing rather than a uniform cross-sector model."
+            whyItMatters="Sector heterogeneity can dominate model quality; one-size-fits-all allocation burns edge."
+            tone="positive"
+          />
+          <InsightCard
+            title="Technology signal is near efficient-market floor"
+            insight="Narrative-heavy guidance in large-cap tech is rapidly priced by the market."
+            implication="Lower expected alpha; keep tech weight capped unless supported by non-NLP factors."
+            whyItMatters="Prevents over-allocating to highly competitive information environments."
+            tone="warning"
+          />
+          <InsightCard
+            title="Energy and Industrials behave as information-asymmetric sectors"
+            insight="Operational disclosures remain concrete and slower to be fully priced."
+            implication="Prioritize NLP feature depth and earnings-event workflows in those sectors."
+            whyItMatters="This is where marginal modeling effort should generate the most ROI."
+          />
+        </div>
+      </section>
 
       <section className="space-y-4">
         <div className="flex items-center justify-between">

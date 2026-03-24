@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -12,6 +12,7 @@ import { fetchData } from '@/lib/types'
 import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
 import { InsightCard } from '@/components/ui/insight-card'
+import { HeroMetrics } from '@/components/ui/hero-metrics'
 
 function ScoreBar({ label, value, invert = false, order = 0 }: { label: string; value: number | null; invert?: boolean; order?: number }) {
   if (value == null || isNaN(value)) return null
@@ -44,6 +45,7 @@ export default function ExplorerPage() {
   const [selectedQuarter, setSelectedQuarter] = useState<number>(2)
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -112,6 +114,26 @@ export default function ExplorerPage() {
   const tickerIndex = tickers.findIndex((t) => t.ticker === selectedTicker)
   const prevTicker = tickerIndex > 0 ? tickers[tickerIndex - 1]?.ticker : null
   const nextTicker = tickerIndex >= 0 && tickerIndex < tickers.length - 1 ? tickers[tickerIndex + 1]?.ticker : null
+useEffect(() => {
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey) {
+      event.preventDefault()
+      searchInputRef.current?.focus()
+      return
+    }
+    if (event.key === 'ArrowLeft' && prevTicker) {
+      event.preventDefault()
+      setSelectedTicker(prevTicker)
+    }
+    if (event.key === 'ArrowRight' && nextTicker) {
+      event.preventDefault()
+      setSelectedTicker(nextTicker)
+    }
+  }
+
+  window.addEventListener('keydown', onKeyDown)
+  return () => window.removeEventListener('keydown', onKeyDown)
+}, [nextTicker, prevTicker])
 
   if (loading) {
     return (
@@ -128,16 +150,32 @@ export default function ExplorerPage() {
         eyebrow="601 Companies · 2018–2024"
         title="Transcript Explorer"
         description="Decision cockpit for single-name transcript intelligence. Find a ticker, inspect regime shifts, and decide whether signal quality supports conviction."
+
+      />
+
+      <HeroMetrics
+        metrics={[
+          { label: 'Ticker', value: tickerIndex + 1, hint: selectedTicker, tone: 'neutral' },
+          { label: 'Mgmt Net', value: currentRow?.mgmt_net_sentiment ?? 0, decimals: 3, hint: `${selectedYear} Q${selectedQuarter}`, tone: (currentRow?.mgmt_net_sentiment ?? 0) > 0 ? 'positive' : 'warning' },
+          { label: 'QA Net', value: currentRow?.qa_net_sentiment ?? 0, decimals: 3, hint: 'Analyst sentiment', tone: (currentRow?.qa_net_sentiment ?? 0) > 0 ? 'positive' : 'warning' },
+          { label: '5D Return', value: (ret5d ?? 0) * 100, decimals: 2, suffix: '%', hint: 'Post-call reaction', tone: isUp ? 'positive' : 'warning' },
+        ]}
+
       />
 
       {/* Controls */}
       <motion.div
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+
+        className="flex flex-col gap-3 sticky top-0 z-30 py-2 bg-[#0b0d13]/85 backdrop-blur-md"
+
         className="flex flex-col gap-3"
+
       >
         <div className="relative w-full max-w-xl">
           <Search className="absolute left-4 top-3.5 w-5 h-5 text-zinc-500" />
           <input
+            ref={searchInputRef}
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search ticker (e.g., AAPL, NVDA, XOM)"
@@ -185,6 +223,9 @@ export default function ExplorerPage() {
             {isUp ? '▲' : '▼'} 5d: {(ret5d * 100).toFixed(2)}%
           </div>
         )}
+        <div className="text-[11px] text-zinc-500">
+          Keyboard: <span className="text-zinc-300 font-medium">/</span> search · <span className="text-zinc-300 font-medium">←/→</span> switch ticker
+        </div>
       </motion.div>
 
       <section className="space-y-4">
@@ -224,7 +265,8 @@ export default function ExplorerPage() {
             {/* Radar + scores */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <ChartCard
-                title={`${selectedTicker} — ${selectedYear} Q${selectedQuarter} Sentiment Radar`}
+                title={`Conclusion: ${selectedTicker} tone is ${isUp ? 'aligned with positive reaction' : 'showing caution vs price response'}`}
+                subtitle="Primary question: does speaker tone profile support the observed post-call move?"
               >
                 <div className="h-[200px] md:h-[280px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -248,7 +290,10 @@ export default function ExplorerPage() {
                 </div>
               </ChartCard>
 
-              <ChartCard title="Feature Scores">
+              <ChartCard
+                title="Conclusion: semantic confidence and risk language explain conviction quality"
+                subtitle="Use this score stack to decide if the signal is robust or fragile."
+              >
                 <ScoreBar label="Mgmt Net Sentiment" value={currentRow.mgmt_net_sentiment} order={0} />
                 <ScoreBar label="QA Net Sentiment" value={currentRow.qa_net_sentiment} order={1} />
                 <ScoreBar label="Mgmt Negativity" value={currentRow.mgmt_neg_ratio} invert order={2} />
@@ -271,8 +316,8 @@ export default function ExplorerPage() {
                   transition={{ duration: 0.4, ease: 'easeOut' }}
                 >
                   <ChartCard
-                    title={`${selectedTicker} — Sentiment Over Time`}
-                    subtitle={`${histData.length} quarters of history`}
+                    title={`Conclusion: ${selectedTicker} trend ${histData.length > 4 ? 'shows regime evolution' : 'needs more history for robust trend judgment'}`}
+                    subtitle={`${histData.length} quarters of history · focus on direction persistence, not one-quarter noise`}
                   >
                     <div className="h-[200px] md:h-[280px]">
                       <ResponsiveContainer width="100%" height="100%">

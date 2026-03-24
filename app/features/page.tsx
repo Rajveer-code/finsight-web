@@ -11,6 +11,9 @@ import { ChartCard } from '@/components/ui/chart-card'
 import { PageHeader } from '@/components/ui/page-header'
 import { InsightCard } from '@/components/ui/insight-card'
 
+import { HeroMetrics } from '@/components/ui/hero-metrics'
+
+
 function featColor(name: string) {
   if (name.startsWith('rag_'))  return '#3b82f6'
   if (name.startsWith('mgmt_')) return '#22c55e'
